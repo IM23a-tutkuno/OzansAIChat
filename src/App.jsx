@@ -13,13 +13,21 @@ function App() {
         }
     };
 
+    const handleLogout = () => {
+        setIsLoggedIn(false);
+        localStorage.removeItem('token')
+        localStorage.removeItem('api-key')
+        localStorage.removeItem('username')
+        localStorage.setItem('loggedIn', '0')
+    };
+
     return (
         <div className="min-h-screen flex flex-col justify-center items-center bg-gray-900 text-gray-100 font-sans">
             <div
                 className="bg-gray-900 backdrop-blur-lg p-10 rounded-xl  text-center   w-10/12 h-5/6">
                 {isLoggedIn === true ?
                     (
-                        <DarkThemedChat></DarkThemedChat>
+                        <DarkThemedChat onLogout={handleLogout}></DarkThemedChat>
                     ) : (
                         <Login onLogin={handleLogin}></Login>)}
             </div>

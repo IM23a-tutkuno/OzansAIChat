@@ -4,6 +4,7 @@ import dotenv from 'dotenv';
 import cors from 'cors';
 import axios from "axios";
 import jwt from 'jsonwebtoken'
+import Anthropic from "@anthropic-ai/sdk";
 
 dotenv.config();  // Load .env file for environment variables
 
@@ -74,6 +75,7 @@ async function get_user(username, password) {
     })
 }
 
+
 app.listen(PORT, () => {
     console.log(`Backend running at http://localhost:${PORT}`);
 });
@@ -86,6 +88,7 @@ app.post('/api/login', async (req, res) => {
     if (result === 1) {
         let info = await get_user(username, password)
         info = info[0][0]
+        const apiKey = info.api_key
         const token = jwt.sign(
             {
                 username: info.username,
@@ -96,10 +99,51 @@ app.post('/api/login', async (req, res) => {
             process.env.SECRET_JWT
         )
         console.log(res.json)
-        res.json({success: true, message: "Logged in successfully!", result, token})
+        console.log(token)
+        res.json({success: true, message: "Logged in successfully!", result, token, apiKey})
     } else if (result === 0) {
         res.json({success: false, message: "Username or password wrong!", result});
     }
 });
+
+
+app.post('/api/chat', async (req, res) => {
+    console.log(req.body)
+    const token = req.body.Authorization
+    const user_prompt = req.body.prompt
+    const decoded_token = jwt.decode(token)
+    const API_KEY = decoded_token.api_key
+    console.log(decoded_token)
+    const anthropic = new Anthropic({
+        apiKey: API_KEY // defaults to process.env["ANTHROPIC_API_KEY"]
+    });
+    const response = await send_chat(user_prompt, anthropic)
+    res.json({success: true, response: response, token})
+
+
+
+});
+
+
+async function send_chat(prompt, anthropic) {
+    console.log(prompt)
+    const msg = await anthropic.messages.create({
+        model: "claude-3-5-sonnet-20241022",
+        max_tokens: 1024,
+        messages: [
+            {
+                role: "user",
+                content: [
+                    {
+                        type: "text",
+                        text: prompt
+                    }
+                ]
+            }
+        ]
+    });
+    console.log(msg)
+    return msg.content[0].text
+}
 
 
