@@ -1,9 +1,10 @@
-import express, {json} from 'express';
+import express from 'express';
 import dotenv from 'dotenv'
 import cors from 'cors';
 import pg from 'pg'
 import axios from "axios";
 import jwt from 'jsonwebtoken'
+import {createClient} from '@supabase/supabase-js'
 import Anthropic from "@anthropic-ai/sdk";
 
 
@@ -13,47 +14,49 @@ const {Client} = pg
 dotenv.config();  // Load .env file for environment variables
 
 
-const client = new Client({
-    connectionString: "postgresql://postgres:WompWomp12345@localhost:5432/OzanAI_Chat"
-});
-
-await client.connect()
+const supabase = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL, process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY)
 
 
 app.use(cors());
 app.use(express.json());
 
 
-
-async function check_credentials(username, password) {
-    let query = `SELECT * FROM check_credentials($1, $2);`;
+async function check_credentials(username_input, passwort_input) {
     try {
-        let results = await client.query(query, [username, password])
-        let result = results.rows[0].check_credentials
-        return result
+        const {data, error} = await supabase
+            .rpc('check_credentials', {passwort_input, username_input});
+
+        if (error) {
+            console.error('Error checking credentials:', error);
+            throw error;
+        }
+
+        return data; // Should return true or false from your Supabase function
     } catch (err) {
-        console.error('Error while checking credentials.', err)
+        console.error('Error while checking credentials.', err);
         throw err;
     }
-
 }
 
 let wow = await check_credentials('meow', 'TestUser')
 console.log(wow)
 
 
-async function get_user(username, password) {
-    console.log('sfa')
-    let query = `SELECT * FROM get_user($1, $2);`;
+async function get_user(username_input, passwort_input) {
     try {
-        // Query the database
-        let user_results = await client.query(query, [username, password]);
-        return user_results;
+        const {data, error} = await supabase
+            .rpc('get_user', {passwort_input, username_input});
+
+        if (error) {
+            console.error('Error fetching user information:', error);
+            throw error;
+        }
+        console.log(data)
+        return data; // Should return the user's details from your Supabase function
     } catch (err) {
         console.error('Error while fetching user information:', err);
-        throw err; // Pass the error to the caller
+        throw err;
     }
-
 }
 
 let yes = await get_user('KajaBear<3', 'ILOVEKAJAKULTERMAN')
@@ -73,13 +76,13 @@ app.post('/api/login', async (req, res) => {
     console.log(result)
     if (result === true) {
         let info = await get_user(username, password)
-        info = info.rows[0]
-        console.log(info)
+        info = info[0]
         const apiKey = info.api_key
         const token = jwt.sign(
             {
                 username: info.username,
                 passwort: info.passwort,
+                apiKey: apiKey,
                 ai_name: info.ai_name
             },
             process.env.SECRET_JWT
@@ -98,8 +101,9 @@ app.post('/api/chat', async (req, res) => {
     const token = req.body.Authorization
     const user_prompt = req.body.prompt
     const decoded_token = jwt.decode(token)
-    const API_KEY = decoded_token.api_key
+    const API_KEY = decoded_token.apiKey
     console.log(decoded_token)
+    console.log(API_KEY)
     const anthropic = new Anthropic({
         apiKey: API_KEY // defaults to process.env["ANTHROPIC_API_KEY"]
     });
