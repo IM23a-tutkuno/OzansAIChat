@@ -31,7 +31,7 @@ export const Login = ({onLogin}) => {
                     localStorage.setItem('api-key', response.data.apiKey)
                     localStorage.setItem('loggedIn', '1')
                     console.log(response.data.result)
-                    if (response.data.result === 1) {
+                    if (response.data.result === true) {
                         localStorage.setItem('username', username)
                         onLogin(1)
                     } else {
