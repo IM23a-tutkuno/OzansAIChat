@@ -17,60 +17,62 @@ export const Login = ({onLogin}) => {
     }
 
 
-        const handleSubmit = (e) => {
-            e.preventDefault();
+    const handleSubmit = (e) => {
+        e.preventDefault();
 
 
-            const loginData = {username, password};
+        const loginData = {username, password};
 
-            axios.post('https://aibackend-production-f2e2.up.railway.app/api/login', loginData)
-                .then(response => {
-                    let msg = document.getElementById('login_msg')
+        axios.post('https://aibackend-production-f2e2.up.railway.app/api/login', loginData)
+            .then(response => {
+                let msg = document.getElementById('login_msg')
+                if (response.data.result === true) {
                     msg.textContent = response.data.message
                     localStorage.setItem('token', response.data.token)
                     localStorage.setItem('api-key', response.data.apiKey)
-                    localStorage.setItem('loggedIn', '1')
                     console.log(response.data.result)
-                    if (response.data.result === true) {
-                        localStorage.setItem('username', username)
-                        onLogin(1)
-                    } else {
-                        onLogin(0)
-                    }
-                    console.log(response)
-                })
-                .catch(error => {
-                    setError('Invalid credentials'); // Handle error
-                    console.error('Login error:', error);
-                });
-        };
+                    localStorage.setItem('username', username)
+                    localStorage.setItem('loggedIn', '1')
+                    onLogin(1)
+                } else if (response.data.result === false) {
+                    console.log('false yupp')
+                    onLogin(0)
+                }
+                console.log(response)
+            })
+            .catch(error => {
+                setError('Invalid credentials'); // Handle error
+                console.error('Login error:', error);
+            });
+    };
 
-        return (
-            <Card className="mx-auto max-w-sm bg-black border border-black">
-                <CardHeader className="space-y-1">
-                    <CardTitle className="text-2xl font-bold">Login</CardTitle>
-                    <CardDescription>Enter your Username and password to login to your account</CardDescription>
-                </CardHeader>
-                <CardContent>
-                    <div className="space-y-4">
-                        <div className="space-y-2 text-left">
-                            <Label htmlFor="user" id="username" >Username</Label>
-                            <Input id="user" type="email" placeholder="username"
-                                   onChange={(e) => setUsername(e.target.value)} required/>
-                        </div>
-                        <div className="space-y-2 text-left">
-                            <Label htmlFor="password" id="password">Password</Label>
-                            <Input id="password" type="password" onChange={(e) => setPassword(e.target.value)}
-                                   required/>
-                        </div>
-                        <div id="login_msg"></div>
-                        <Button type="submit" className="w-full  bg-white text-black hover:bg-gray-300" onClick={handleSubmit}>
-                            Login
-                        </Button>
+    return (
+        <Card className="mx-auto max-w-sm bg-black border border-black">
+            <CardHeader className="space-y-1">
+                <CardTitle className="text-2xl font-bold">Login</CardTitle>
+                <CardDescription>Enter your Username and password to login to your account</CardDescription>
+            </CardHeader>
+            <CardContent>
+                <div className="space-y-4">
+                    <div className="space-y-2 text-left">
+                        <Label htmlFor="user" id="username">Username</Label>
+                        <Input id="user" type="email" placeholder="username"
+                               onChange={(e) => setUsername(e.target.value)} required/>
                     </div>
-                </CardContent>
-            </Card>
-        )
-    }
+                    <div className="space-y-2 text-left">
+                        <Label htmlFor="password" id="password">Password</Label>
+                        <Input id="password" type="password" onChange={(e) => setPassword(e.target.value)}
+                               required/>
+                    </div>
+                    <div id="login_msg"></div>
+                    <Button type="submit" className="w-full  bg-white text-black hover:bg-gray-300"
+                            onClick={handleSubmit}>
+                        Login
+                    </Button>
+                </div>
+            </CardContent>
+        </Card>
+    )
+}
 
-    export default {Login}
+export default {Login}
