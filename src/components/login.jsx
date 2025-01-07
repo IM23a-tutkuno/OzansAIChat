@@ -23,7 +23,7 @@ export const Login = ({onLogin}) => {
 
             const loginData = {username, password};
 
-            axios.post('http://localhost:5000/api/login', loginData)
+            axios.post('https://aibackend-production-f2e2.up.railway.app/api/login', loginData)
                 .then(response => {
                     let msg = document.getElementById('login_msg')
                     msg.textContent = response.data.message

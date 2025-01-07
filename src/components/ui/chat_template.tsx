@@ -44,7 +44,7 @@ export default function DarkThemedChat({onLogout}) {
         let local_token = localStorage.getItem('token')
         const token = {'Authorization': local_token, 'prompt': prompt}
         setPrompt('')
-        axios.post('http://localhost:5000/api/chat', token).then(
+        axios.post('https://aibackend-production-f2e2.up.railway.app/api/chat', token).then(
             response => {
                 console.log(response)
                 setMessages((prevMessages) => [
