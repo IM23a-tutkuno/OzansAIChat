@@ -4,17 +4,16 @@ import {Input} from "@/components/ui/input";
 import {Label} from "@/components/ui/label"
 import {Button} from "@/components/ui/button"
 import axios from 'axios';
+import {useNavigate} from "react-router-dom";
+
 
 
 export const Login = ({onLogin}) => {
     const [username, setUsername] = useState('');
     const [password, setPassword] = useState('');
     const [error, setError] = useState('')
+    const navigate = useNavigate()
 
-
-    if (localStorage.getItem('token')) {
-        onLogin(1)
-    }
 
 
     const handleSubmit = (e) => {
@@ -23,7 +22,7 @@ export const Login = ({onLogin}) => {
 
         const loginData = {username, password};
 
-        axios.post('https://aibackend-production-f2e2.up.railway.app/api/login', loginData)
+        axios.post('http://localhost:5000/api/login', loginData)
             .then(response => {
                 let msg = document.getElementById('login_msg')
                 if (response.data.result === true) {
@@ -33,9 +32,9 @@ export const Login = ({onLogin}) => {
                     console.log(response.data.result)
                     localStorage.setItem('username', username)
                     localStorage.setItem('loggedIn', '1')
-                    onLogin(1)
+                    navigate('/chat')
+
                 } else if (response.data.result === false) {
-                    console.log('false yupp')
                     onLogin(0)
                 }
                 console.log(response)
@@ -75,4 +74,4 @@ export const Login = ({onLogin}) => {
     )
 }
 
-export default {Login}
+export default Login

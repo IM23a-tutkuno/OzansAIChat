@@ -108,6 +108,7 @@ app.post('/api/chat', async (req, res) => {
         apiKey: API_KEY // defaults to process.env["ANTHROPIC_API_KEY"]
     });
     const response = await send_chat(user_prompt, anthropic)
+    console.log(response)
     res.json({success: true, response: response, token})
 
 
@@ -119,17 +120,7 @@ async function send_chat(prompt, anthropic) {
     const msg = await anthropic.messages.create({
         model: "claude-3-5-sonnet-20241022",
         max_tokens: 1024,
-        messages: [
-            {
-                role: "user",
-                content: [
-                    {
-                        type: "text",
-                        text: prompt
-                    }
-                ]
-            }
-        ]
+        messages: prompt
     });
     console.log(msg)
     return msg.content[0].text
