@@ -14,6 +14,7 @@ import {Tooltip, TooltipContent, TooltipProvider, TooltipTrigger} from "./toolti
 import {Switch} from "./switch"
 import {ChevronDown, Copy, Eye, EyeOff, LogOut, Send, Plus, Loader2} from "lucide-react";
 import {AnimatePresence, motion} from "framer-motion";
+import {OpenAI} from "openai";
 
 
 type Message = {
@@ -58,8 +59,16 @@ export default function DarkThemedChat() {
 
         e.preventDefault();
         let local_token = localStorage.getItem('token')
-        const token = {'Authorization': local_token, 'prompt': updatedMessages,}
-        axios.post('http://localhost:5000/api/chat', token).then(
+        const token = {'token': local_token, 'messages': updatedMessages, ai_name: selectedAI}
+
+        if (selectedAI === "deepseek-r1") {
+            setMessages(prevMessages => [...prevMessages, {
+                role: 'assistant',
+                content: "thinking..."
+            }]);
+        }
+
+        await axios.post('http://localhost:5000/api/chat', token).then(
             response => {
                 console.log(response)
                 setMessages((prevMessages) => [
@@ -84,7 +93,7 @@ export default function DarkThemedChat() {
             {role: 'user', content: prompt}
         ]);
 
-        const newMessage = {role: 'user', content: prompt} as Message;
+        const newMessage = {role: 'user', content: prompt, ai_name: selectedAI} as Message;
 
         const updatedMessages = messages.concat(newMessage);
         setPrompt('')
@@ -152,6 +161,9 @@ export default function DarkThemedChat() {
                             <DropdownMenuContent align="end" className="bg-gray-800/90 backdrop-blur-md">
                                 <DropdownMenuItem onClick={() => setSelectedAI('Claude')}>
                                     Claude
+                                </DropdownMenuItem>
+                                <DropdownMenuItem onClick={() => setSelectedAI('deepseek-r1')}>
+                                    deepseek-r1
                                 </DropdownMenuItem>
                             </DropdownMenuContent>
                         </DropdownMenu>
@@ -231,7 +243,8 @@ export default function DarkThemedChat() {
                                             <Avatar className="w-8 h-8">
                                                 <AvatarFallback>{message.role === 'assistant' ? 'AI' : 'U'}</AvatarFallback>
                                                 <AvatarImage
-                                                    src={message.role === 'assistant' ? '/anthropic.png' : '/user-avatar.png'}/>
+                                                    src={message.role === 'assistant' && selectedAI == "Claude" ? '/anthropic.png' : '/user.png'}/>
+
                                             </Avatar>
                                             <div className={`mx-2 p-3 rounded-lg ${
                                                 message.role === 'assistant'

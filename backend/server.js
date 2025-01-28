@@ -6,6 +6,7 @@ import axios from "axios";
 import jwt from 'jsonwebtoken'
 import {createClient} from '@supabase/supabase-js'
 import Anthropic from "@anthropic-ai/sdk";
+import OpenAI from "openai"
 
 
 const app = express();
@@ -23,8 +24,9 @@ app.use(express.json());
 
 async function check_credentials(username_input, passwort_input) {
     try {
+        let datas = {"username_input": username_input, "passwort_input": passwort_input}
         const {data, error} = await supabase
-            .rpc('check_credentials', {passwort_input, username_input});
+            .rpc('check_credentials', datas);
 
         if (error) {
             console.error('Error checking credentials:', error);
@@ -37,9 +39,6 @@ async function check_credentials(username_input, passwort_input) {
         throw err;
     }
 }
-
-let wow = await check_credentials('meow', 'TestUser')
-console.log(wow)
 
 
 async function get_user(username_input, passwort_input) {
@@ -68,14 +67,15 @@ app.listen(PORT, () => {
 });
 
 app.post('/api/login', async (req, res) => {
-    const {username, password} = req.body;
-    console.log(`Username ${username}`)
-    console.log(`Password ${password}`)
+    const {username_input, passwort_input} = req.body;
+    console.log(req.body)
+    console.log(`Username ${username_input}`)
+    console.log(`Password ${passwort_input}`)
     console.log('safffs')
-    let result = await check_credentials(username, password)
+    let result = await check_credentials(username_input, passwort_input)
     console.log(result)
     if (result === true) {
-        let info = await get_user(username, password)
+        let info = await get_user(username_input, passwort_input)
         info = info[0]
         const apiKey = info.api_key
         const token = jwt.sign(
@@ -97,33 +97,58 @@ app.post('/api/login', async (req, res) => {
 
 
 app.post('/api/chat', async (req, res) => {
-    console.log(req.body)
-    const token = req.body.Authorization
-    const user_prompt = req.body.prompt
+    const token = req.body.token
+    const user_messages = req.body.messages
+    console.log(user_messages)
+    console.log("safsajf")
     const decoded_token = jwt.decode(token)
-    const API_KEY = decoded_token.apiKey
     console.log(decoded_token)
-    console.log(API_KEY)
-    const anthropic = new Anthropic({
-        apiKey: API_KEY // defaults to process.env["ANTHROPIC_API_KEY"]
-    });
-    const response = await send_chat(user_prompt, anthropic)
-    console.log(response)
-    res.json({success: true, response: response, token})
+    const API_KEY = decoded_token.apiKey
+    const ai_name = req.body.ai_name
+    console.log(ai_name)
+    if (ai_name === "Claude") {
+        const anthropic = new Anthropic({
+            apiKey: API_KEY // defaults to process.env["ANTHROPIC_API_KEY"]
+        });
+        const response = await send_chat(user_messages, anthropic)
+        res.json({success: true, response: response, token})
+    } else if (ai_name === "deepseek-r1") {
+        const openai = new OpenAI({
+            baseURL: "https://openrouter.ai/api/v1",
+            apiKey: process.env.OPENROUTER_KEY,
+            defaultHeaders: {
+            }
+
+        })
+        const response = await send_openrouter_chat(user_messages, openai)
+        console.log(response)
+        res.json({success: true, response: response, token})
+
+    }
 
 
 });
 
 
-async function send_chat(prompt, anthropic) {
-    console.log(prompt)
+async function send_chat(user_messages, anthropic) {
+    console.log("ffsafff")
+    console.log(user_messages)
     const msg = await anthropic.messages.create({
         model: "claude-3-5-sonnet-20241022",
         max_tokens: 1024,
-        messages: prompt
+        messages: user_messages
     });
-    console.log(msg)
     return msg.content[0].text
+}
+
+async function send_openrouter_chat(prompt, openai) {
+    console.log(prompt)
+    const completion = await openai.chat.completions.create({
+        model: "deepseek/deepseek-r1",
+        messages: prompt
+    })
+    console.log(completion.choices[0].message.content)
+    return completion.choices[0].message.content
 }
 
 

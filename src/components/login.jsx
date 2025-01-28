@@ -18,9 +18,12 @@ export const Login = ({onLogin}) => {
 
     const handleSubmit = (e) => {
         e.preventDefault();
+        let username_input = username
+        let passwort_input = password
 
 
-        const loginData = {username, password};
+        const loginData = {username_input, passwort_input};
+
 
         axios.post('http://localhost:5000/api/login', loginData)
             .then(response => {
