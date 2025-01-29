@@ -99,13 +99,14 @@ app.post('/api/login', async (req, res) => {
 app.post('/api/chat', async (req, res) => {
     const token = req.body.token
     const user_messages = req.body.messages
+
     console.log(user_messages)
     console.log("safsajf")
     const decoded_token = jwt.decode(token)
     console.log(decoded_token)
     const API_KEY = decoded_token.apiKey
-    const ai_name = req.body.ai_name
-    console.log(ai_name)
+    const ai_name = req.body.ai
+    console.log("fsfaf")
     if (ai_name === "Claude") {
         const anthropic = new Anthropic({
             apiKey: API_KEY // defaults to process.env["ANTHROPIC_API_KEY"]

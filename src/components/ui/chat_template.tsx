@@ -18,15 +18,13 @@ import {OpenAI} from "openai";
 
 
 type Message = {
-    role: 'assistant' | 'user'
-    content: string
+    role: 'assistant' | 'user',
+    content: string,
+    ai: string
 }
 
 export default function DarkThemedChat() {
     const navigate = useNavigate()
-    const [messages, setMessages] = useState<Message[]>([
-        {role: 'assistant', content: `Welcome ${localStorage.getItem('username')}! Ask me anything!`}
-    ])
 
     const [prompt, setPrompt] = useState('');
     const [type, setType] = useState('password')
@@ -35,6 +33,17 @@ export default function DarkThemedChat() {
     const [apiKey, setApiKey] = useState('')
     const [showApiKey, setShowApiKey] = useState(false)
     const [selectedAI, setSelectedAI] = useState('Claude')
+    const aiAvatars = {
+        'deepseek-r1': './deepseek.png',
+        'gpt-4': './gpt3.png',
+        'Claude': './anthropic.png',
+        // Add more AI models as needed
+    };
+
+    const [messages, setMessages] = useState<Message[]>([
+        {role: 'assistant', content: `Welcome ${localStorage.getItem('username')}! Ask me anything!`, ai: selectedAI}
+    ])
+
     const [isCopied, setIsCopied] = useState(false)
     const [isLoading, setIsLoading] = useState(false)
     const [darkMode, setDarkMode] = useState(true)
@@ -45,26 +54,34 @@ export default function DarkThemedChat() {
         }
     }, []);
 
+
     const handlePrompt = async (e) => {
         setMessages((prevMessages) => [
             ...prevMessages,
-            {role: 'user', content: prompt}
+            {role: 'user', content: prompt, ai: selectedAI}
         ]);
 
         setPrompt('')
 
-        const newMessage = {role: 'user', content: prompt} as Message;
+
+        const newMessage = {role: 'user', content: prompt, ai: selectedAI} as Message;
 
         const updatedMessages = messages.concat(newMessage);
 
+        const filteredMessages = [...messages, newMessage].map(({ai, ...msg}) => msg);
+        console.log("rff")
+        console.log(filteredMessages)
+
+
         e.preventDefault();
         let local_token = localStorage.getItem('token')
-        const token = {'token': local_token, 'messages': updatedMessages, ai_name: selectedAI}
+        const token = {'token': local_token, 'messages': filteredMessages, ai: selectedAI}
 
         if (selectedAI === "deepseek-r1") {
             setMessages(prevMessages => [...prevMessages, {
                 role: 'assistant',
-                content: "thinking..."
+                content: "thinking...",
+                ai: "deepseek-r1"
             }]);
         }
 
@@ -73,7 +90,7 @@ export default function DarkThemedChat() {
                 console.log(response)
                 setMessages((prevMessages) => [
                     ...prevMessages,
-                    {role: 'assistant', content: response.data.response},
+                    {role: 'assistant', content: response.data.response, ai: selectedAI},
                 ])
             },
         )
@@ -90,10 +107,10 @@ export default function DarkThemedChat() {
         e.preventDefault();
         setMessages((prevMessages) => [
             ...prevMessages,
-            {role: 'user', content: prompt}
+            {role: 'user', content: prompt, ai: selectedAI}
         ]);
 
-        const newMessage = {role: 'user', content: prompt, ai_name: selectedAI} as Message;
+        const newMessage = {role: 'user', content: prompt, ai: selectedAI} as Message;
 
         const updatedMessages = messages.concat(newMessage);
         setPrompt('')
@@ -106,7 +123,7 @@ export default function DarkThemedChat() {
                 console.log(messages)
                 setMessages((prevMessages) => [
                     ...prevMessages,
-                    {role: 'assistant', content: response.data.content[0].text},
+                    {role: 'assistant', content: response.data.content[0].text, ai: selectedAI},
                 ])
             },
         )
@@ -243,7 +260,12 @@ export default function DarkThemedChat() {
                                             <Avatar className="w-8 h-8">
                                                 <AvatarFallback>{message.role === 'assistant' ? 'AI' : 'U'}</AvatarFallback>
                                                 <AvatarImage
-                                                    src={message.role === 'assistant' && selectedAI == "Claude" ? '/anthropic.png' : '/user.png'}/>
+                                                    src={
+                                                        message.role === 'assistant'
+                                                            ? aiAvatars[message.ai] || '/avatars/default-ai.png'  // Use mapped AI image or default
+                                                            : '/user.png'
+                                                    }
+                                                />
 
                                             </Avatar>
                                             <div className={`mx-2 p-3 rounded-lg ${
